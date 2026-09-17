@@ -1,0 +1,8 @@
+{
+  "name": "Remix DevFlow",
+  "description": "A unified developer workspace integrating project management, CI/CD, Git operations, and AI-driven insights into one powerful OS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
