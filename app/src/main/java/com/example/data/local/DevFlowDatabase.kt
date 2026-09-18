@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 )
 abstract class DevFlowDatabase : RoomDatabase() {
     abstract fun devFlowDao(): DevFlowDao
+    abstract fun projectTaskDao(): ProjectTaskDao
 
     companion object {
         @Volatile

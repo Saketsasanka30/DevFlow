@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.GitBranchSwitcher
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.DevAccentGreen
 import com.example.ui.theme.DevAccentPurple
@@ -278,32 +279,10 @@ fun RepositoriesScreen(
                 }
 
                 RepoViewTab.BRANCHES -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    GitBranchSwitcher(
+                        viewModel = viewModel,
                         modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(branches) { branch ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(DevSurfaceCardDark)
-                                    .border(1.dp, DevBorderDark, RoundedCornerShape(8.dp))
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.AltRoute, contentDescription = null, tint = DevPrimaryCyan, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(branch.name, fontFamily = DevCodeFont, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                                }
-                                if (branch.isDefault) {
-                                    StatusBadge("DEFAULT", DevAccentGreen, DevAccentGreen, hasDot = false)
-                                }
-                            }
-                        }
-                    }
+                    )
                 }
 
                 RepoViewTab.RELEASES -> {

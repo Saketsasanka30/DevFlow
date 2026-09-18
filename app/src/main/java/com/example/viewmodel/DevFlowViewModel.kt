@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.ai.AiMessage
 import com.example.data.ai.AiPromptType
+import com.example.data.ai.CodeAnalysisService
 import com.example.data.ai.GeminiDevAssistant
+import com.example.data.git.GitCliService
 import com.example.data.github.GitHubIntegration
 import com.example.data.local.ActivityLogEntity
 import com.example.data.local.ApiDocEntity
@@ -15,9 +17,11 @@ import com.example.data.local.DocEntity
 import com.example.data.local.EnvironmentEntity
 import com.example.data.local.IssueEntity
 import com.example.data.local.ProjectEntity
+import com.example.data.local.ProjectTaskDao
 import com.example.data.local.PullRequestEntity
 import com.example.data.local.RepositoryEntity
 import com.example.data.local.TaskEntity
+import com.example.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +36,7 @@ enum class DevFlowModule(val displayName: String, val category: String) {
     ISSUES("Issues", "Code"),
     PULL_REQUESTS("Pull Requests", "Code"),
     CODE_ACTIVITY("Code Activity", "Code"),
+    AI_CODE_ANALYSIS("AI Code Analysis", "Code"),
     CI_CD("CI/CD", "Deploy"),
     DEPLOYMENTS("Deployments", "Deploy"),
     ENVIRONMENTS("Environments", "Deploy"),
@@ -67,6 +72,9 @@ class DevFlowViewModel(application: Application) : AndroidViewModel(application)
 
     val gitHubIntegration = GitHubIntegration(dao)
     val aiAssistant = GeminiDevAssistant()
+    val projectTaskDao: ProjectTaskDao = database.projectTaskDao()
+    val gitCliService = GitCliService(application, dao)
+    val codeAnalysisService = CodeAnalysisService()
 
     // Navigation state
     private val _currentModule = MutableStateFlow(DevFlowModule.DASHBOARD)
@@ -96,7 +104,10 @@ class DevFlowViewModel(application: Application) : AndroidViewModel(application)
     private val _isAiAssistantOpen = MutableStateFlow(false)
     val isAiAssistantOpen: StateFlow<Boolean> = _isAiAssistantOpen.asStateFlow()
 
-    // Dark Mode Theme
+    // Theme Mode & Provider
+    private val _themeMode = MutableStateFlow(ThemeMode.DARK)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
     private val _isDarkTheme = MutableStateFlow(true)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
 
@@ -196,8 +207,21 @@ class DevFlowViewModel(application: Application) : AndroidViewModel(application)
         _isAiAssistantOpen.value = open ?: !_isAiAssistantOpen.value
     }
 
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        _isDarkTheme.value = when (mode) {
+            ThemeMode.SYSTEM -> true
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+        }
+    }
+
     fun toggleTheme() {
-        _isDarkTheme.value = !_isDarkTheme.value
+        if (_isDarkTheme.value) {
+            setThemeMode(ThemeMode.LIGHT)
+        } else {
+            setThemeMode(ThemeMode.DARK)
+        }
     }
 
     fun selectDeployment(deployment: DeploymentEntity?) {
@@ -431,7 +455,21 @@ class DevFlowViewModel(application: Application) : AndroidViewModel(application)
     // Update Task Status
     fun updateTaskStatus(task: TaskEntity, newStatus: String) {
         viewModelScope.launch {
-            dao.updateTask(task.copy(status = newStatus))
+            projectTaskDao.updateTaskStatus(task.id, newStatus)
+        }
+    }
+
+    // Update Task Priority
+    fun updateTaskPriority(task: TaskEntity, newPriority: String) {
+        viewModelScope.launch {
+            projectTaskDao.updateTaskPriority(task.id, newPriority)
+        }
+    }
+
+    // Delete Task
+    fun deleteTask(taskId: String) {
+        viewModelScope.launch {
+            projectTaskDao.deleteTaskById(taskId)
         }
     }
 

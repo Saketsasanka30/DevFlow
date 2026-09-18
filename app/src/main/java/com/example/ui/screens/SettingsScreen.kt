@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.DevAccentGreen
 import com.example.ui.theme.DevAccentPurple
@@ -54,6 +56,7 @@ import com.example.ui.theme.DevCodeFont
 import com.example.ui.theme.DevPrimaryCyan
 import com.example.ui.theme.DevSurfaceCardDark
 import com.example.ui.theme.DevSurfaceDark
+import com.example.ui.theme.ThemeMode
 import com.example.viewmodel.DevFlowViewModel
 
 @Composable
@@ -62,6 +65,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     var ghToken by remember { mutableStateOf(viewModel.gitHubIntegration.personalAccessToken) }
     var geminiKey by remember { mutableStateOf(viewModel.aiAssistant.userCustomApiKey) }
     var saveStatus by remember { mutableStateOf("") }
@@ -80,40 +84,72 @@ fun SettingsScreen(
         // Appearance / Theme
         item {
             Card(
-                colors = CardDefaults.cardColors(containerColor = DevSurfaceCardDark),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DevBorderDark),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
-                            contentDescription = null,
-                            tint = DevPrimaryCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Developer Dark Theme", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Monochrome high-contrast dark aesthetic", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                contentDescription = null,
+                                tint = DevPrimaryCyan,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("Interface Appearance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Switch between Light and Dark mode across the entire app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
+
+                        Switch(
+                            checked = isDarkTheme,
+                            onCheckedChange = { viewModel.toggleTheme() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = DevPrimaryCyan,
+                                checkedTrackColor = DevPrimaryCyan.copy(alpha = 0.3f)
+                            ),
+                            modifier = Modifier.testTag("theme_toggle_switch")
+                        )
                     }
 
-                    Switch(
-                        checked = isDarkTheme,
-                        onCheckedChange = { viewModel.toggleTheme() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = DevPrimaryCyan,
-                            checkedTrackColor = DevPrimaryCyan.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.testTag("theme_toggle_switch")
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ThemeMode.values().forEach { mode ->
+                            val isSelected = themeMode == mode
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) DevPrimaryCyan.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface)
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) DevPrimaryCyan else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { viewModel.setThemeMode(mode) }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = mode.label,
+                                    fontFamily = DevCodeFont,
+                                    fontSize = 12.sp,
+                                    color = if (isSelected) DevPrimaryCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

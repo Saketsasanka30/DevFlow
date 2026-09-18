@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.AiAssistantDrawer
+import com.example.ui.components.CodeAnalysisPanel
 import com.example.ui.components.CommandPaletteDialog
 import com.example.ui.components.KeyboardShortcutsDialog
 import com.example.ui.components.TerminalPanel
@@ -82,6 +83,7 @@ import com.example.ui.theme.DevAccentGreen
 import com.example.ui.theme.DevAccentPurple
 import com.example.ui.theme.DevBorderDark
 import com.example.ui.theme.DevCodeFont
+import com.example.ui.theme.DevFlowThemeProvider
 import com.example.ui.theme.DevPrimaryCyan
 import com.example.ui.theme.DevSurfaceCardDark
 import com.example.ui.theme.DevSurfaceDark
@@ -93,6 +95,7 @@ import com.example.viewmodel.DevFlowViewModel
 @Composable
 fun DevFlowMainApp(viewModel: DevFlowViewModel) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val currentModule by viewModel.currentModule.collectAsState()
     val isPaletteOpen by viewModel.isCommandPaletteOpen.collectAsState()
     val isShortcutsOpen by viewModel.isShortcutsDialogOpen.collectAsState()
@@ -102,7 +105,11 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
     val aiMessages by viewModel.aiMessages.collectAsState()
     val isAiGenerating by viewModel.isAiGenerating.collectAsState()
 
-    MyApplicationTheme(darkTheme = isDarkTheme) {
+    DevFlowThemeProvider(
+        themeMode = themeMode,
+        onSetThemeMode = { viewModel.setThemeMode(it) },
+        onToggleTheme = { viewModel.toggleTheme() }
+    ) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -179,7 +186,7 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = DevSurfaceDark,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
@@ -187,8 +194,8 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
             bottomBar = {
                 // Horizontal Module Navigation Bar
                 Surface(
-                    color = DevSurfaceDark,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DevBorderDark)
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 ) {
                     Row(
                         modifier = Modifier
@@ -203,6 +210,7 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
                             val icon = getModuleIcon(module)
                             val iconColor = when {
                                 isSelected -> DevPrimaryCyan
+                                module == DevFlowModule.AI_CODE_ANALYSIS -> DevAccentPurple
                                 module == DevFlowModule.API_DOCS -> DevAccentPurple
                                 module == DevFlowModule.DEPLOYMENTS -> DevAccentGreen
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -245,7 +253,7 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DevSurfaceDark)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 // Active Module Screen Content
                 when (currentModule) {
@@ -255,6 +263,7 @@ fun DevFlowMainApp(viewModel: DevFlowViewModel) {
                     DevFlowModule.ISSUES -> IssuesScreen(viewModel = viewModel)
                     DevFlowModule.PULL_REQUESTS -> PullRequestsScreen(viewModel = viewModel)
                     DevFlowModule.CODE_ACTIVITY -> CodeActivityScreen(viewModel = viewModel)
+                    DevFlowModule.AI_CODE_ANALYSIS -> CodeAnalysisPanel(service = viewModel.codeAnalysisService)
                     DevFlowModule.CI_CD -> CiCdScreen(viewModel = viewModel)
                     DevFlowModule.DEPLOYMENTS -> DeploymentsScreen(viewModel = viewModel)
                     DevFlowModule.ENVIRONMENTS -> EnvironmentsScreen(viewModel = viewModel)
@@ -326,6 +335,7 @@ fun getModuleIcon(module: DevFlowModule): ImageVector {
         DevFlowModule.ISSUES -> Icons.Default.FormatListBulleted
         DevFlowModule.PULL_REQUESTS -> Icons.Default.Hub
         DevFlowModule.CODE_ACTIVITY -> Icons.Default.Timeline
+        DevFlowModule.AI_CODE_ANALYSIS -> Icons.Default.AutoAwesome
         DevFlowModule.CI_CD -> Icons.Default.Code
         DevFlowModule.DEPLOYMENTS -> Icons.Default.CloudUpload
         DevFlowModule.ENVIRONMENTS -> Icons.Default.Code
